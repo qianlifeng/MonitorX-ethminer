@@ -29,7 +29,7 @@ public class EthMinerService {
     private Date lastTailDate;
     private Double lastTailMh;
 
-    Pattern pattern = Pattern.compile(".*?Speed (.*?) Mh\\/s.*");
+    Pattern pattern = Pattern.compile(".*?Speed.*?36m(.*?)\\^.*");
 
     public Date getLastTailDate() {
         return lastTailDate;
@@ -60,9 +60,13 @@ public class EthMinerService {
     }
 
     private Double parseMh(String line) {
+        logger.info("parse msg: " + line);
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
-            return Double.parseDouble(matcher.group(1));
+            logger.info(matcher.group(1));
+            return Double.parseDouble(matcher.group(1).trim());
+        } else {
+            logger.info("didn't find");
         }
 
         return null;
