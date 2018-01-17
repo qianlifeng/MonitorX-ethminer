@@ -35,7 +35,7 @@ public class ReportSchedule {
     @Value("${url}")
     private String url;
 
-    @Scheduled(fixedRate = 3000)
+    @Scheduled(fixedDelay = 1000)
     public void doNothing() {
         Date lastTailDate = ethMinerService.getLastTailDate();
         if (lastTailDate != null && (lastUploadDate == null || lastUploadDate.compareTo(lastTailDate) != 0)) {
@@ -47,7 +47,7 @@ public class ReportSchedule {
         }
     }
 
-    private void upload(Date lastTailDate, Double lastTailMh) {
+    private void upload(Date lastTailDate, Integer lastTailMh) {
         try {
             logger.info("reporting to monitorx: {} {}", lastTailMh, lastTailDate);
             NodeStatusUpload statusUpload = new NodeStatusUpload();

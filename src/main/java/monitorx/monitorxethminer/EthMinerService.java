@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,9 +28,9 @@ public class EthMinerService {
     String walletAddress;
 
     private Date lastTailDate;
-    private Double lastTailMh;
+    private Integer lastTailMh;
 
-    Pattern pattern = Pattern.compile(".*?Speed.*?36m(.*?)\\^.*");
+    Pattern pattern = Pattern.compile(".*?Speed.*?36m(.*?) M.*");
 
     public Date getLastTailDate() {
         return lastTailDate;
@@ -39,18 +40,18 @@ public class EthMinerService {
         this.lastTailDate = lastTailDate;
     }
 
-    public Double getLastTailMh() {
+    public Integer getLastTailMh() {
         return lastTailMh;
     }
 
-    public void setLastTailMh(Double lastTailMh) {
+    public void setLastTailMh(Integer lastTailMh) {
         this.lastTailMh = lastTailMh;
     }
 
     public void run() throws IOException {
         LogTail tailer = new LogTail(1000, new File(logFile), false);
         tailer.add(msg -> {
-            Double mh = parseMh(msg);
+            Integer mh = parseMh(msg);
             if (mh != null) {
                 lastTailDate = new Date();
                 lastTailMh = mh;
@@ -59,12 +60,10 @@ public class EthMinerService {
         new Thread(tailer).start();
     }
 
-    private Double parseMh(String line) {
-        logger.info("parse msg: " + line);
+    private Integer parseMh(String line) {
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
-            logger.info(matcher.group(1));
-            return Double.parseDouble(matcher.group(1).trim());
+            return new BigDecimal(matcher.group(1)).intValue();
         } else {
             logger.info("didn't find");
         }
