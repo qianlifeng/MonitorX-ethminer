@@ -30,7 +30,7 @@ public class EthMinerService {
     private Date lastTailDate;
     private Integer lastTailMh;
 
-    Pattern pattern = Pattern.compile(".*?Speed.*?36m(.*?) M.*");
+    Pattern pattern = Pattern.compile(".*?Speed (.*?) M.*");
 
     public Date getLastTailDate() {
         return lastTailDate;
@@ -61,9 +61,12 @@ public class EthMinerService {
     }
 
     private Integer parseMh(String line) {
+        //remove ascii color
+        line = line.replaceAll("\u001B\\[[;\\d]*m", "");
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
-            return new BigDecimal(matcher.group(1)).intValue();
+            String val = matcher.group(1);
+            return new BigDecimal(val).intValue();
         } else {
             logger.info("didn't find");
         }
