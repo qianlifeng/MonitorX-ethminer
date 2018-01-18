@@ -2,3 +2,4 @@ log: ./nohup.out
 wallet: 0x68950Ea934f9D4E3FF889e06369ec29b52c0123A
 code: ethminer
 url: http://localhost:8080/api/status/upload/
+gpuFolder: /app/dri
