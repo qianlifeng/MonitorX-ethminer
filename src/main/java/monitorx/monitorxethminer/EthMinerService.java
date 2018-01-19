@@ -65,7 +65,7 @@ public class EthMinerService {
         line = line.replaceAll("\u001B\\[[;\\d]*m", "");
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
-            String val = matcher.group(1);
+            String val = matcher.group(1).trim();
             return new BigDecimal(val).intValue();
         } else {
             logger.info("didn't find");
