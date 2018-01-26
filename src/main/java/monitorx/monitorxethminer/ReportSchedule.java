@@ -1,6 +1,7 @@
 package monitorx.monitorxethminer;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import monitorx.monitorxethminer.statusReport.Metric;
 import monitorx.monitorxethminer.statusReport.NodeStatus;
@@ -81,9 +82,12 @@ public class ReportSchedule {
                 String balance = new BigDecimal(balanceStr).divide(BigDecimal.valueOf(1000000000000000000L)).setScale(3, RoundingMode.HALF_UP).toString();
                 map.put("balance", balance);
 
-                Long hashrate = info.getJSONObject("hashrate").getJSONObject("data").getLong("meanHashrate24H");
-                String meanHashrate24H = new BigDecimal(hashrate).divide(BigDecimal.valueOf(1000000)).setScale(0, RoundingMode.HALF_UP).toString();
-                map.put("meanHashrate24H", meanHashrate24H);
+                JSONArray workers = info.getJSONObject("workers").getJSONArray("data");
+                workers.stream().filter(o -> ((JSONObject) o).getString("rig").equals(code)).findFirst().ifPresent(worker -> {
+                    Long hashrate24H = ((JSONObject) worker).getLong("hashrate1d");
+                    String workerHashrate24HStr = new BigDecimal(hashrate24H).divide(BigDecimal.valueOf(1000000)).setScale(0, RoundingMode.HALF_UP).toString();
+                    map.put("meanHashrate24H", workerHashrate24HStr);
+                });
 
                 xhInfo = map;
             } catch (IOException e) {
@@ -94,7 +98,6 @@ public class ReportSchedule {
 
     private void upload() {
         try {
-            logger.info("reporting to monitorx");
             NodeStatusUpload statusUpload = new NodeStatusUpload();
             NodeStatus status = new NodeStatus();
             statusUpload.setNodeCode(code);
@@ -151,13 +154,16 @@ public class ReportSchedule {
                 xhMetric.setValue("<div style='font-weight: 700;font-size: 90px;font-family: 黑体!important;height: 230px;display: flex;align-items: center;justify-content: center;'>" + xhInfo.get("balance") + "</div>");
                 metrics.add(xhMetric);
 
-                Metric meanHashRateMetric = new Metric();
-                meanHashRateMetric.setTitle("星火24小时平均算力");
-                meanHashRateMetric.setType("number");
-                meanHashRateMetric.setValue(xhInfo.get("meanHashrate24H"));
-                metrics.add(meanHashRateMetric);
+                if (xhInfo.containsKey("meanHashrate24H")) {
+                    Metric meanHashRateMetric = new Metric();
+                    meanHashRateMetric.setTitle("星火24小时平均算力");
+                    meanHashRateMetric.setType("number");
+                    meanHashRateMetric.setValue(xhInfo.get("meanHashrate24H"));
+                    metrics.add(meanHashRateMetric);
+                }
             }
 
+            logger.info("reporting to monitorx, url={}, code={}", url, code);
             HTTPUtil.sendBodyPost(url, JSON.toJSONString(statusUpload));
         } catch (IOException e) {
             logger.error("upload to monitorx error: " + e.getMessage(), e);
